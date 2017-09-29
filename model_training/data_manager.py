@@ -2,6 +2,15 @@ from __future__ import division
 import numpy as np
 from PIL import Image
 
+# top left, top right, bottom left, bottom right, center
+CROP_BOX = np.array([(0, 0, 42, 42), (6, 0, 48, 42), (0, 6, 42, 48), (6, 6, 48, 48), (3, 3, 45, 45)])
+
+FLIP_MIRROR = lambda x:__random_fliplr(x)
+ROTATE = lambda x:__rotate(x, -30, 30)
+RANDOM_CROP = lambda x:__random_crop(x)
+CROP_CENTER = lambda x:__crop_center(x)
+
+
 # flip left to right an image (2D or 3D) randomly
 def __random_fliplr(image):
     rd = np.random.randint(2)
@@ -22,33 +31,42 @@ def __rotate(image, angle_begin, angle_end):
     return rotated
 
 
-# return preprocessed image, input is a 3-D array
-def image_preprocess(image):
+# return cropped image in random 5 position to 42x42
+def __random_crop(image):
     shape = np.shape(image)
-    img = np.reshape(image, shape[0]*shape[1])
-    img -= np.mean(img, axis=0)
-    img /= np.std(img, axis=0)
-    img = np.reshape(img, shape)
-    return img
+    img = np.reshape(image, [shape[0], shape[1]])
+    img = Image.fromarray(img)
+    crop_pos = np.random.randint(5)
+    cropped = img.crop(CROP_BOX[crop_pos])
+    cropped = np.array(cropped)
+    cropped = np.reshape(cropped, [42, 42, 1])
+    return cropped
 
 
-def preprocess(datas):
-    datas -= np.mean(datas, axis=0)
-    datas /= np.std(datas, axis=0)
-    return datas
+# return cropped image in center position to 42x42
+def __crop_center(image):
+    shape = np.shape(image)
+    img = np.reshape(image, [shape[0], shape[1]])
+    img = Image.fromarray(img)
+    cropped = img.crop(CROP_BOX[4])
+    cropped = np.array(cropped)
+    cropped = np.reshape(cropped, [42, 42, 1])
+    return cropped
+
 
 # return augmented images, input is a 4-D array
-def data_augment(images):
+def data_augment(images, aug_methods):
 
-    shape = np.shape(images)
-    augmented_data = np.array([])
+    # shape = np.shape(images)
+    augmented_data = []
 
-    for img in images:
-        aug_img = __random_fliplr(img)
-        aug_img = __rotate(aug_img, -45, 45)
-        augmented_data = np.append(augmented_data, aug_img)
+    for aug_img in images:
+        for aug_med in aug_methods:
+            aug_img = aug_med(aug_img)
 
-    return np.reshape(augmented_data, shape)
+        augmented_data.append(aug_img)
+
+    return augmented_data
 
 
 class Batch:
@@ -105,9 +123,11 @@ class TrainingSet(DataSet):
 
     def preprocess(self):
         mean = np.mean(self.datas, axis=0)
-        stddev = np.std(self.datas, axis=0)
         self.datas -= mean
+
+        stddev = np.std(self.datas, axis=0)
         self.datas /= stddev
+
         return (mean, stddev)
 
     # return the next minibatch
@@ -135,7 +155,7 @@ class TestSet(DataSet):
 
     # return the next minibatch
     def nextbatch(self):
-        if ((self._current_batch + 1) * self.batch_size > self.size):
+        if ((self._current_batch + 1) * self.batch_size >= self.size):
             index_from = self._current_batch * self.batch_size
             index_to = self.size
 
@@ -150,7 +170,7 @@ class TestSet(DataSet):
 
     #check when test is done
     def test_done(self):
-        return self._current_batch * self.batch_size > self.size
+        return self._current_batch * self.batch_size >= self.size
 
 
 
