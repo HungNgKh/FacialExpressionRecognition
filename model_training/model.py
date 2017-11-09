@@ -3,7 +3,6 @@ import tensorflow.contrib.layers as layer
 import numpy as np
 from os.path import exists
 
-from tensorflow.contrib.keras.python.keras.initializers import one
 
 SAVED_MODEL = '../saved/model/my-model.meta'
 

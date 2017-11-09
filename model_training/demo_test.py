@@ -9,6 +9,7 @@ from PIL import Image
 from trainer import  Trainer
 import data_manager as dm
 import cv2
+import datetime
 
 
 def face_detect(img_dir):
@@ -42,10 +43,10 @@ def preprocess_image(img):
 
 labels = np.array(['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral'])
 
-SAVE_PATH = '../saved/model/my-model'
-BEST_MODEL_PATH = '../saved/best_model/best-model'
-META_PATH = '../saved/best_model/best-model.meta'
-CHECKPOINT_PATH = '../saved/best_model'
+SAVE_PATH = '/home/khanhhung/deeplearning/saved/FER/model/my-model'
+# BEST_MODEL_PATH = '/home/khanhhung/deeplearning/FER/saved/best_model/best-model'
+META_PATH = '/home/khanhhung/deeplearning/saved/FER/best_model/best-model.meta'
+CHECKPOINT_PATH = '/home/khanhhung/deeplearning/saved/FER/best_model'
 
 def restore_model(sess):
     if (exists(META_PATH)):
@@ -75,9 +76,11 @@ with tf.Session() as sess:
     print size
 
     if(size > 0):
+        start = datetime.datetime.now()
         pred = sess.run(pred_tensor,
                     feed_dict={x_tensor: face_imgs, y_tensor: np.zeros([size,7]), phase_tensor: False})
 
+        finish = datetime.datetime.now()
 
         print("Predict result : ")
 
@@ -85,6 +88,8 @@ with tf.Session() as sess:
             out = np.argmax(pred[i], 0)
             print out
             print(str(labels[out]))
+
+        print ("Predict time:" + str(finish - start))
 
 
     for (x, y, w, h) in faces:
