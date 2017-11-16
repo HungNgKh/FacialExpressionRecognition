@@ -73,12 +73,11 @@ with tf.Session() as sess:
         face_imgs.append(preprocess_image(img[y:y+h,x:x+w]))
 
     size = np.size(face_imgs, 0)
-    print size
 
-    if(size > 0):
+    if size > 0:
         start = datetime.datetime.now()
         pred = sess.run(pred_tensor,
-                    feed_dict={x_tensor: face_imgs, y_tensor: np.zeros([size,7]), phase_tensor: False})
+                    feed_dict={x_tensor: face_imgs, phase_tensor: False})
 
         finish = datetime.datetime.now()
 
